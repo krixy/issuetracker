@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 public class DueDateCalculatorTest{
@@ -31,6 +32,21 @@ public class DueDateCalculatorTest{
 		LocalDateTime submitTime = LocalDateTime.of(2020, Month.JANUARY, 30, 10, 5);
 		int turnoverTimeInHours = 9;
 		LocalDateTime expectedTime = LocalDateTime.of(2020, Month.JANUARY, 31, 11, 5);
+		
+		issueSubmitTimeInfo.setSubmitTime(submitTime);
+		issueSubmitTimeInfo.setTurnoverTimeInHours(turnoverTimeInHours);
+		
+		LocalDateTime actualTime = DueDateCalculator.calculateDueDate(issueSubmitTimeInfo);
+		assertEquals(expectedTime, actualTime);
+	}
+	
+	@Test
+	public void testOverADayWithLessThanADayTurnover(){
+		IssueSubmitTimeInfo issueSubmitTimeInfo = new IssueSubmitTimeInfo();
+		
+		LocalDateTime submitTime = LocalDateTime.of(2020, Month.JANUARY, 30, 16, 5);
+		int turnoverTimeInHours = 1;
+		LocalDateTime expectedTime = LocalDateTime.of(2020, Month.JANUARY, 31, 9, 5);
 		
 		issueSubmitTimeInfo.setSubmitTime(submitTime);
 		issueSubmitTimeInfo.setTurnoverTimeInHours(turnoverTimeInHours);
@@ -129,6 +145,51 @@ public class DueDateCalculatorTest{
 		assertEquals(expectedTime, actualTime);
 	}
 	
+	@Test
+	public void testIsssueCreatedOnAWeekdayEvening(){
+		IssueSubmitTimeInfo issueSubmitTimeInfo = new IssueSubmitTimeInfo();
+		
+		LocalDateTime submitTime = LocalDateTime.of(2020, Month.JANUARY, 30, 22, 30);
+		int turnoverTimeInHours = 2;
+		LocalDateTime expectedTime = LocalDateTime.of(2020, Month.JANUARY, 31, 11, 0);
+		
+		issueSubmitTimeInfo.setSubmitTime(submitTime);
+		issueSubmitTimeInfo.setTurnoverTimeInHours(turnoverTimeInHours);
+		
+		LocalDateTime actualTime = DueDateCalculator.calculateDueDate(issueSubmitTimeInfo);
+		assertEquals(expectedTime, actualTime);
+	}
+	
+	@Test
+	public void testDueDateIsAtTheAndOfWeek(){
+		IssueSubmitTimeInfo issueSubmitTimeInfo = new IssueSubmitTimeInfo();
+		
+		LocalDateTime submitTime = LocalDateTime.of(2020, Month.JANUARY, 31, 16, 0);
+		int turnoverTimeInHours = 1;
+		LocalDateTime expectedTime = LocalDateTime.of(2020, Month.FEBRUARY, 3, 9, 0);
+		
+		issueSubmitTimeInfo.setSubmitTime(submitTime);
+		issueSubmitTimeInfo.setTurnoverTimeInHours(turnoverTimeInHours);
+		
+		LocalDateTime actualTime = DueDateCalculator.calculateDueDate(issueSubmitTimeInfo);
+		assertEquals(expectedTime, actualTime);
+	}
+	
+	@Test
+	public void testDueDateIsAtTheAndOfDay(){
+		IssueSubmitTimeInfo issueSubmitTimeInfo = new IssueSubmitTimeInfo();
+		
+		LocalDateTime submitTime = LocalDateTime.of(2020, Month.JANUARY, 30, 16, 0);
+		int turnoverTimeInHours = 1;
+		LocalDateTime expectedTime = LocalDateTime.of(2020, Month.JANUARY, 31, 9, 0);
+		
+		issueSubmitTimeInfo.setSubmitTime(submitTime);
+		issueSubmitTimeInfo.setTurnoverTimeInHours(turnoverTimeInHours);
+		
+		LocalDateTime actualTime = DueDateCalculator.calculateDueDate(issueSubmitTimeInfo);
+		assertEquals(expectedTime, actualTime);
+	}
+	
 	@Test()
 	public void testSubmitTimeInfoIsNull(){
 		
@@ -149,6 +210,31 @@ public class DueDateCalculatorTest{
 		String expectedMessage = "Turnover cannot be negative or zero!";
 		String actualMessage = exception.getMessage();
 		assertEquals(expectedMessage, actualMessage);
+	}
+	
+	@Test
+	public void testPerformance(){
+		IssueSubmitTimeInfo issueSubmitTimeInfo = new IssueSubmitTimeInfo();
+		
+		LocalDateTime submitTime = LocalDateTime.of(2020, Month.JANUARY, 30, 16, 0);
+		int turnoverTimeInHours = 1;		
+		issueSubmitTimeInfo.setSubmitTime(submitTime);
+		issueSubmitTimeInfo.setTurnoverTimeInHours(turnoverTimeInHours);
+		
+		long startTime = System.currentTimeMillis();
+		IntStream.range(0, 10).forEach(x -> DueDateCalculator.calculateDueDate(issueSubmitTimeInfo));
+		long endTime = System.currentTimeMillis();
+		System.out.println("Execution took:" + (endTime-startTime) +" ms");
+		
+		startTime = System.currentTimeMillis();
+		IntStream.range(0, 1000).forEach(x -> DueDateCalculator.calculateDueDate(issueSubmitTimeInfo));
+		endTime = System.currentTimeMillis();
+		System.out.println("Execution took:" + (endTime-startTime) +" ms");
+		
+		startTime = System.currentTimeMillis();
+		IntStream.range(0, 100000).forEach(x -> DueDateCalculator.calculateDueDate(issueSubmitTimeInfo));
+		endTime = System.currentTimeMillis();
+		System.out.println("Execution took:" + (endTime-startTime) +" ms");		
 	}
 	
 

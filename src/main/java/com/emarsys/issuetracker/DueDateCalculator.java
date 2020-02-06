@@ -15,7 +15,8 @@ public class DueDateCalculator {
 	private static int WORKING_HOURS_IN_A_WEEK = 40;
 	private static int WORKING_HOURS_IN_A_DAY = 8;
 
-	private static int WORKING_DAY_START_TIME = 9;
+	private static int WORKING_DAY_START_HOUR = 9;
+	private static int WORKING_DAY_START_MINUTE = 0;
 	private static int WORKING_DAY_END_TIME = 17;
 
 	/**
@@ -39,7 +40,7 @@ public class DueDateCalculator {
 		LocalDateTime result = issueSubmitTimeInfo.getSubmitDate();
 		result = adjustIssueStartTimeToNextValidWorkingTime(result);
 
-		int workingHoursPastThisDay = result.getHour() - WORKING_DAY_START_TIME;
+		int workingHoursPastThisDay = result.getHour() - WORKING_DAY_START_HOUR;
 		int workingHoursPastThisWeek = (result.getDayOfWeek().getValue() - 1) * WORKING_HOURS_IN_A_DAY + workingHoursPastThisDay;
 		int workingHourLeftFromStartWeek = WORKING_HOURS_IN_A_WEEK - workingHoursPastThisWeek;
 
@@ -53,19 +54,19 @@ public class DueDateCalculator {
 			weeksAhead = turnoverTimeInHours / WORKING_HOURS_IN_A_WEEK;
 			turnoverTimeInHours = turnoverTimeInHours % WORKING_HOURS_IN_A_WEEK;
 
-			result = result.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(9);
+			result = result.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(WORKING_DAY_START_HOUR);
 			workingHoursPastThisDay = 0;
 		}
 
 		int workingHoursLeftThisDay = WORKING_HOURS_IN_A_DAY - workingHoursPastThisDay;
 
-		if (turnoverTimeInHours > workingHoursLeftThisDay) {
+		if (turnoverTimeInHours >= workingHoursLeftThisDay) {
 			turnoverTimeInHours = turnoverTimeInHours - workingHoursLeftThisDay;
 
 			daysAhead = turnoverTimeInHours / WORKING_HOURS_IN_A_DAY;
 			turnoverTimeInHours = turnoverTimeInHours % WORKING_HOURS_IN_A_DAY;
 
-			result = result.withHour(9).plusDays(1);
+			result = result.withHour(WORKING_DAY_START_HOUR).plusDays(1);
 		}
 
 		int daysToAdd = weeksAhead * 7 + daysAhead;
@@ -82,7 +83,6 @@ public class DueDateCalculator {
 	 *                                  value.
 	 * @param issueSubmitTimeInfo is the parameter, which is validated
 	 * 
-	 *                            Notice that, if the submit
 	 */
 	private static void validateInputParameters(IssueSubmitTimeInfo issueSubmitTimeInfo) {
 
@@ -104,21 +104,21 @@ public class DueDateCalculator {
 	 */
 	private static LocalDateTime adjustIssueStartTimeToNextValidWorkingTime(LocalDateTime submitDate) {
 
-		if (submitDate.getHour() < WORKING_DAY_START_TIME && submitDate.getDayOfWeek().getValue() <= 5) {
+		if (submitDate.getHour() < WORKING_DAY_START_HOUR && submitDate.getDayOfWeek().getValue() <= 5) {
 
-			submitDate = submitDate.withHour(9).withMinute(0);
+			submitDate = submitDate.withHour(WORKING_DAY_START_HOUR).withMinute(WORKING_DAY_START_MINUTE);
 
 		} else if (submitDate.getHour() > WORKING_DAY_END_TIME && submitDate.getDayOfWeek().getValue() < 5) {
 
-			submitDate = submitDate.withHour(9).withMinute(0).plusDays(1);
+			submitDate = submitDate.withHour(WORKING_DAY_START_HOUR).withMinute(WORKING_DAY_START_MINUTE).plusDays(1);
 
 		} else if (submitDate.getHour() > WORKING_DAY_END_TIME && submitDate.getDayOfWeek() == DayOfWeek.FRIDAY) {
 
-			submitDate = submitDate.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(9).withMinute(0);
+			submitDate = submitDate.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(WORKING_DAY_START_HOUR).withMinute(WORKING_DAY_START_MINUTE);
 
 		} else if (submitDate.getDayOfWeek().getValue() > 5) {
 
-			submitDate = submitDate.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(9).withMinute(0);
+			submitDate = submitDate.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).withHour(WORKING_DAY_START_HOUR).withMinute(WORKING_DAY_START_MINUTE);
 
 		}
 		return submitDate;
